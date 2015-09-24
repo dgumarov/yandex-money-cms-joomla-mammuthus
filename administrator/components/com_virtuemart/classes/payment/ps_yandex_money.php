@@ -95,7 +95,7 @@ class ps_yandex_money
 		{
 			$db->record[$db->row]->payment_extrainfo = '<?php
 // Класс для оплаты через сервис Яндекс.Касса
-// Модуль версии 1.2.0
+// Модуль версии 1.2.1
 // Лицензионный договор.
 // Любое использование Вами программы означает полное и безоговорочное принятие Вами условий лицензионного договора, размещенного по адресу https://money.yandex.ru/doc.xml?id=527132 (далее – «Лицензионный договор»). Если Вы не принимаете условия Лицензионного договора в полном объёме, Вы не имеете права использовать программу в каких-либо целях.
 
@@ -573,6 +573,7 @@ echo $ym->get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, ar
 
 		// HTML-страница с формой
 		$htmlBlock =<<<YMEOF
+<input type="hidden"name="cms_name" value="joomla-virtuemart">
 <input type="hidden"name="scid" value="$ym_SCID">
 <input type="hidden" name="ShopID" value="$ym_shopID">
 <input type="hidden" name="Sum" value="$out_sum">
@@ -642,7 +643,7 @@ class yamoney_statistics {
 			'url' => JURI::base(),
 			'cms' => 'joomla',
 			'version' => JVERSION,
-			'ver_mod' => '1.2.0',
+			'ver_mod' => '1.2.1',
 			'yacms' => false,
 			'email' => $user->email,
 			'shopid' => YM_SHOPID,
