@@ -56,18 +56,6 @@ class yandex_money_language
 	
 	var $PHPSHOP_ADMIN_CFG_YM_QP = "Доверительный платеж (Куппи.ру)";
 	var $PHPSHOP_ADMIN_CFG_YM_QP_EXPLAIN = "Оплата через доверительный платеж (Куппи.ру)";
-
-	var $PHPSHOP_YM_ORDER_STATUS_WAIT_SET = "Пользователь сделал заказ, но ещё не оплатил. Заказу присвоен статус &laquo;в обработке&raquo;.";
-	var $PHPSHOP_ADMIN_CFG_YM_WAIT_STATUS = "Статус готов к оплате";
-	var $PHPSHOP_ADMIN_CFG_YM_WAIT_STATUS_EXPLAIN = "Статус, при котором заказ <i>разрешено</i> оплатить.";
-
-	var $PHPSHOP_YM_ORDER_STATUS_CHECK_SET = "Пользователь начал оплату заказа, но ещё не оплатил. Заказу присвоен статус &laquo;пользоваль подтвердил чек&raquo;.";
-	var $PHPSHOP_ADMIN_CFG_YM_CHECK_STATUS = "Статус пользователь подтвердил чек";
-	var $PHPSHOP_ADMIN_CFG_YM_CHECK_STATUS_EXPLAIN = "Статус, при котором заказ <i>оплачивается пользователем</i>.";
-
-	var $PHPSHOP_YM_ORDER_STATUS_PAYMENT_SET = "Пользователь успешно оплатил счёт. Заказу присвоен статус &laquo;оплачен&raquo;.";
-	var $PHPSHOP_ADMIN_CFG_YM_STATUS_PAYMENT = "Статус успешной оплаты";
-	var $PHPSHOP_ADMIN_CFG_YM_STATUS_PAYMENT_EXPLAIN = "Выбранный статус будет выставлен заказу, который был успешно оплачен.";
 }
  
 class ps_yandex_money 
@@ -81,7 +69,7 @@ class ps_yandex_money
 	function ps_yandex_money() 
 	{
 		global $VM_LANG;
-		$status = $VM_LANG->merge('yandex_money_language');
+		$status = (!empty($VM_LANG))?$VM_LANG->merge('yandex_money_language'):array();
 	}
 
 	/**
@@ -95,7 +83,7 @@ class ps_yandex_money
 		{
 			$db->record[$db->row]->payment_extrainfo = '<?php
 // Класс для оплаты через сервис Яндекс.Касса
-// Модуль версии 1.2.1
+// Модуль версии 1.2.2
 // Лицензионный договор.
 // Любое использование Вами программы означает полное и безоговорочное принятие Вами условий лицензионного договора, размещенного по адресу https://money.yandex.ru/doc.xml?id=527132 (далее – «Лицензионный договор»). Если Вы не принимаете условия Лицензионного договора в полном объёме, Вы не имеете права использовать программу в каких-либо целях.
 
@@ -206,7 +194,7 @@ h4.span.txt_h4 {font-weight: normal;}
 
 <?php
 $ym = new ps_yandex_money();
-echo $ym->get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, array() );
+echo $ym->get_ym_params_block($host, number_format($out_sum, 2), $customerNumber, $orderNumber, array() );
 ?>
 
 <div class="payments_methods">
@@ -359,67 +347,6 @@ echo $ym->get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, ar
 			$order_status_name[] =  $dbs->f("order_status_name");
 		}
 		?>
-
-
-		<tr>
-			<td><strong><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_WAIT_STATUS; ?></strong></td>
-			<td>
-			<select name="YM_WAIT_STATUS" class="inputbox" >
-			<?php
-				for ($i=0; $i < sizeof($order_status_code); $i++) 
-				{
-					if (YM_WAIT_STATUS == $order_status_code[$i])
-						$selected = 'selected="selected"';
-					else
-						$selected = '';
-
-					echo '<option '.$selected.' value="'.$order_status_code[$i].'">'.$order_status_name[$i].'</option>';
-				}
-			?>
-			</select>
-			</td>
-			<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_WAIT_STATUS_EXPLAIN; ?></td>
-		</tr>
-		<tr>
-			<td><strong><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_CHECK_STATUS; ?></strong></td>
-			<td>
-			<select name="YM_CHECK_STATUS" class="inputbox" >
-			<?php
-				for ($i=0; $i < sizeof($order_status_code); $i++) 
-				{
-					if (YM_CHECK_STATUS == $order_status_code[$i])
-						$selected = 'selected="selected"';
-					else 
-						$selected = '';
-
-				echo '<option '.$selected.' value="'.$order_status_code[$i].'">'.$order_status_name[$i].'</option>';
-				}
-			?>
-			</select>
-			</td>
-			<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_CHECK_STATUS_EXPLAIN; ?></td>
-		</tr>
-		<tr>
-			<td><strong><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_STATUS_PAYMENT; ?></strong></td>
-			<td>
-			<select name="YM_PAYMENT_STATUS" class="inputbox" >
-			<?php
-				for ($i=0; $i < sizeof($order_status_code); $i++) 
-				{
-					if (YM_PAYMENT_STATUS == $order_status_code[$i]) 
-						$selected = 'selected="selected"';
-					else
-						$selected = '';
-					
-					echo '<option '.$selected.' value="'.$order_status_code[$i].'">'.$order_status_name[$i].'</option>';
-				}
-			?>
-			</select>
-			</td>
-			<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_STATUS_PAYMENT_EXPLAIN; ?>
-			</td>
-		</tr>
-
 	</table>
 	<?php
 	}
@@ -508,27 +435,6 @@ echo $ym->get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, ar
 
 			$list=array('PC','AC','GC','MC','WM','AB','SB','MA','PB','QW', 'QP');
 			foreach ($list as $item) $my_config_array['YM_'.$item] =(isset($d['YM_'.$item]) && $d['YM_'.$item])?'1':'0';
-			
-			if (isset($d['YM_WAIT_STATUS']))
-			{
-				$my_config_array ['YM_WAIT_STATUS'] = $d['YM_WAIT_STATUS'];
-			} else {
-				$my_config_array ['YM_WAIT_STATUS'] = 'P';
-			}
-
-			if (isset($d['YM_CHECK_STATUS']))
-			{
-				$my_config_array ['YM_CHECK_STATUS'] = $d['YM_CHECK_STATUS'];
-			} else {
-				$my_config_array ['YM_CHECK_STATUS'] = 'W';
-			}
-
-			if (isset($d['YM_PAYMENT_STATUS'])) 
-			{
-				$my_config_array ['YM_PAYMENT_STATUS'] = $d['YM_PAYMENT_STATUS'];
-			} else {
-				$my_config_array ['YM_PAYMENT_STATUS'] = 'O';
-			}
 		}
 
 		$config = "<?php if( !defined( '_VALID_MOS' ) && !defined( '_JEXEC' ) ) die('Direct Access to this location is not allowed.');\n\n";
@@ -554,8 +460,7 @@ echo $ym->get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, ar
 		}
 		else return false;
 	}
-
-
+	
 	//Форма для оплаты заказа через систему Яндекс.Деньги
 	//Выводится после оформления заказа. Через payment_extrainfo
 	function get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, $hidden_param) 
@@ -638,15 +543,15 @@ class yamoney_statistics {
 	{
 		$headers = array();
 		$headers[] = 'Content-Type: application/x-www-form-urlencoded';
-		$user = JFactory::getUser();
+		$user = JFactory::getUser(); 
 		$array = array(
 			'url' => JURI::base(),
 			'cms' => 'joomla',
 			'version' => JVERSION,
-			'ver_mod' => '1.2.1',
+			'ver_mod' => '1.2.2',
 			'yacms' => false,
 			'email' => $user->email,
-			'shopid' => YM_SHOPID,
+			'shopid' => YM_SHOPID || 0,
 			'settings' => array(
 				'kassa' => true
 			)
