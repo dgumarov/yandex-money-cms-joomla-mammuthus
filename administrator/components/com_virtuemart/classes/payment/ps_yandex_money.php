@@ -194,7 +194,7 @@ h4.span.txt_h4 {font-weight: normal;}
 
 <?php
 $ym = new ps_yandex_money();
-echo $ym->get_ym_params_block($host, number_format($out_sum, 2), $customerNumber, $orderNumber, array() );
+echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $customerNumber, $orderNumber, array() );
 ?>
 
 <div class="payments_methods">
