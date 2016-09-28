@@ -4,25 +4,39 @@
 // Компонент ps_yandex_money.php, реализующий настройку подключения по протоколу Яндекс.Деньги 3.0(ЕПР)
 // 
 if( !defined( '_VALID_MOS' ) && !defined( '_JEXEC' ) ) die( 'Direct Access to '.basename(__FILE__).' is not allowed.' );
-
+define ('YM_VERSION', '1.2.3');
 class yandex_money_language 
 {
 	var $PHPSHOP_ADMIN_CFG_YM_CURRENCY = "руб.";
 
-	var $PHPSHOP_ADMIN_CFG_YM_SETTINGS = "Настройки подключения";
+	var $PHPSHOP_ADMIN_CFG_YM_SETTINGS = "Яндекс.Касса";
 	var $PHPSHOP_ADMIN_CFG_YM_PAYMENTTYPES = "Методы оплаты";
+
+	var $PHPSHOP_ADMIN_CFG_YM_LICENSE = "Работая с модулем, вы автоматически соглашаетесь с <a href='https://money.yandex.ru/doc.xml?id=527132' target='_blank'>условиями его использования</a>.";
+	var $PHPSHOP_ADMIN_CFG_YM_TEXT_VERSION = "Версия модуля";
+	var $PHPSHOP_ADMIN_CFG_YM_TEXT_CONNECT = "Для работы с модулем нужно подключить магазин к <a target=\"_blank\" href=\"https://money.yandex.ru/joinups\">Яндекс.Кассе</a>.";
+	var $PHPSHOP_ADMIN_CFG_YM_TESTMODE = "Тестовый режим";
+	var $PHPSHOP_ADMIN_CFG_YM_WORKMODE = "Рабочий режим";
+	var $PHPSHOP_ADMIN_CFG_YM_EXTRA_CHECKURL = "Скопируйте эту ссылку в поля Check URL и Aviso URL в настройках <a target=\"_blank\" href=\"https://kassa.yandex.ru/my\">личного кабинета Яндекс.Кассы</a>";
+	var $PHPSHOP_ADMIN_CFG_YM_SUCCESSURL = "Страницы с динамическими адресами";
+	var $PHPSHOP_ADMIN_CFG_YM_EXTRA_SUCCESSURL = "Включите «Использовать страницы успеха и ошибки с динамическими адресами» в <a target=\"_blank\" href=\"https://kassa.yandex.ru/my\">личного кабинета Яндекс.Кассы</a>";
+	var $PHPSHOP_ADMIN_CFG_YM_HEAD_LK = "Параметры из личного кабинета Яндекс.Кассы";
+	var $PHPSHOP_ADMIN_CFG_YM_EXTRA_SETTING = "Shop ID, scid, ShopPassword можно посмотреть в <a target=\"_blank\" href=\"https://kassa.yandex.ru/my\">личном кабинете</a> после подключения Яндекс.Кассы.";
+	var $PHPSHOP_ADMIN_CFG_YM_PAYMODE1 = "Выбор способа оплаты на стороне Яндекс.Кассы";
+	var $PHPSHOP_ADMIN_CFG_YM_PAYMODE0 = "Выбор способа оплаты на стороне магазина";
+	var $PHPSHOP_ADMIN_CFG_YM_EXTRA_PAYMODE = "Подробнее о сценариях оплаты";
 
 	var $PHPSHOP_ADMIN_CFG_YM_DEBUG = "Демо-режим";
 	var $PHPSHOP_ADMIN_CFG_YM_DEBUG_EXPLAIN = "Демо-режим. Режим тестирования подключения к платежной системе Яндекс.Деньги.";
 
 	var $PHPSHOP_ADMIN_CFG_YM_SHOPID = "Идентификатор магазина";
-	var $PHPSHOP_ADMIN_CFG_YM_SHOPID_EXPLAIN = "shopID системе <a href=https://start.money.yandex.ru/><u>Яндекс.Деньги</u></a>";
+	var $PHPSHOP_ADMIN_CFG_YM_SHOPID_EXPLAIN = "";
 
-	var $PHPSHOP_ADMIN_CFG_YM_SCID = "Номер витрины";
-	var $PHPSHOP_ADMIN_CFG_YM_SCID_EXPLAIN = "SCID системе <a href=https://start.money.yandex.ru/><u>Яндекс.Деньги</u></a>, выдается после заполнения технической анкеты<br /><b>Важно!</b> Номер витрины в демо- и в реальном режиме НЕ СОВПАДАЮТ!";
+	var $PHPSHOP_ADMIN_CFG_YM_SCID = "Номер витрины магазина";
+	var $PHPSHOP_ADMIN_CFG_YM_SCID_EXPLAIN = "";
 
-	var $PHPSHOP_ADMIN_CFG_YM_SHOPPASSWORD = "Секретный пароль";
-	var $PHPSHOP_ADMIN_CFG_YM_SHOPPASSWORD_EXPLAIN = "Заполняется в технической анкете при подключении к системе <a href=https://start.money.yandex.ru/><u>Яндекс.Деньги</u></a>";
+	var $PHPSHOP_ADMIN_CFG_YM_SHOPPASSWORD = "Секретное слово";
+	var $PHPSHOP_ADMIN_CFG_YM_SHOPPASSWORD_EXPLAIN = "";
 
 	var $PHPSHOP_ADMIN_CFG_YM_PC = "Кошелек Яндекс.Деньги";
 	var $PHPSHOP_ADMIN_CFG_YM_PC_EXPLAIN = "Оплата из кошелька в Яндекс.Деньгах.";
@@ -83,7 +97,6 @@ class ps_yandex_money
 		{
 			$db->record[$db->row]->payment_extrainfo = '<?php
 // Класс для оплаты через сервис Яндекс.Касса
-// Модуль версии 1.2.2
 // Лицензионный договор.
 // Любое использование Вами программы означает полное и безоговорочное принятие Вами условий лицензионного договора, размещенного по адресу https://money.yandex.ru/doc.xml?id=527132 (далее – «Лицензионный договор»). Если Вы не принимаете условия Лицензионного договора в полном объёме, Вы не имеете права использовать программу в каких-либо целях.
 
@@ -108,7 +121,7 @@ $currency = $VM_LANG->PHPSHOP_ADMIN_CFG_YM_CURRENCY;
 // customerNumber
 $user =& JFactory::getUser();
 $customerNumber = $user->username;
-
+$paymode = intval(YM_PAYMODE);
 // способы оплаты
 // payment types
 $paymentTypes = array();
@@ -160,6 +173,7 @@ if ( intval(YM_QP) )
 
 <style type="text/css">
 div.payments_methods img {border: none; width: 32px; height: 32px; margin: 0 0 0 0;}
+div.smart_pay img {border: none; width: 165px; height: 76px; margin: 0 0 0 0;}
 div.payments_methods button {
 	cursor:pointer;
 	display:inline;
@@ -168,20 +182,32 @@ div.payments_methods button {
 	line-height:32px;
 	text-align:center;
 	background-repeat:no-repeat;
+	background-color: transparent;
 	border: none;
 	margin: 0 6px 0 6px;
 }
-div.payments_methods #btnAC {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/ac.png\')}
-div.payments_methods #btnPC {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/pc.png\')}
-div.payments_methods #btnGP {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/gp.png\')}
-div.payments_methods #btnMC {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/mc.png\')}
-div.payments_methods #btnWM {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/wm.png\')}
-div.payments_methods #btnAB {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/ab.png\')}
-div.payments_methods #btnSB {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/sb.png\')}
-div.payments_methods #btnPB {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/pb.png\')}
-div.payments_methods #btnMA {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/ma.png\')}
-div.payments_methods #btnQW {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/qw.png\')}
-div.payments_methods #btnQP {background-image:url(\'http://<?php echo $host; ?>/images/yamoney/qp.png\')}
+div.smartpay button {
+	cursor:pointer;
+	background-color: transparent;
+	background-repeat:no-repeat;
+	height:76px;
+	width:165px;
+	border: none;
+	margin: 0 6px 0 6px;
+	background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/smart.png\')
+}
+div.payments_methods #btnAC {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/ac.png\')}
+div.payments_methods #btnPC {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/pc.png\')}
+div.payments_methods #btnGP {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/gp.png\')}
+div.payments_methods #btnMC {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/mc.png\')}
+div.payments_methods #btnWM {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/wm.png\')}
+div.payments_methods #btnAB {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/ab.png\')}
+div.payments_methods #btnSB {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/sb.png\')}
+div.payments_methods #btnPB {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/pb.png\')}
+div.payments_methods #btnMA {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/ma.png\')}
+div.payments_methods #btnQW {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/qw.png\')}
+div.payments_methods #btnQP {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/qp.png\')}
+div.payments_methods #btnSmartPay {background-image:url(\'<?php echo JURI::base(); ?>images/yamoney/smart.png\')}
 
 h4.span.txt_h4 {font-weight: normal;}
 </style>
@@ -196,12 +222,18 @@ h4.span.txt_h4 {font-weight: normal;}
 $ym = new ps_yandex_money();
 echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $customerNumber, $orderNumber, array() );
 ?>
-
-<div class="payments_methods">
-<?php foreach( $paymentTypes as $ptKey => $ptName ) { ?>
-<button name="paymentType" value="<?php echo $ptKey; ?>" type="submit" id="btn<?php echo $ptKey; ?>" title="<?php echo $ptName; ?>"></button>
+<?php if (!$paymode){ ?>
+	<div class="payments_methods">
+	<?php foreach( $paymentTypes as $ptKey => $ptName ) { ?>
+	<button name="paymentType" value="<?php echo $ptKey; ?>" type="submit" id="btn<?php echo $ptKey; ?>" title="<?php echo $ptName; ?>"></button>
+	<?php } ?>
+	</div>
+<?php }else{ ?>
+<div class="smart_pay">
+	<div class="smartpay">
+		<button name="paymentType" value="" type="submit" id="btnSmartPay" title="Заплатить через Яндекс"></button>
+	</div>
 <?php } ?>
-</div>
 </form>
 ';
 		}
@@ -212,10 +244,41 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 		else
 			return false;
 ?>
-	<table style="text-align:left">
-
+		<h3><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_SETTINGS; ?></h3>
+		<br><p><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_LICENSE; ?></p>
+		<p><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_TEXT_VERSION; ?> <?php echo YM_VERSION; ?></p>
+		<br>
+		<p><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_TEXT_CONNECT; ?></p>
+		<br>
+		<input type="radio" name="YM_DEBUG" class="checkbox" value="1" <?php if( intval(YM_DEBUG) ) echo "checked=\"checked\" "; ?>/> <?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_TESTMODE; ?>
+		<input type="radio" name="YM_DEBUG" class="checkbox" value="0" <?php if( !intval(YM_DEBUG) ) echo "checked=\"checked\" "; ?>/> <?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_WORKMODE; ?>
+		<br><br>
+		<table style="text-align:left">
+			<tr>
+				<td><strong>checkUrl/avisoUrl</strong></td>
+				<td></td>
+				<td><?php echo JURI::base().'components/com_virtuemart/yandex_money_notify.php'; ?></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_EXTRA_CHECKURL; ?></td>
+			</tr>
+			<tr>
+				<td><strong>successUrl/failUrl</strong></td>
+				<td></td>
+				<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_SUCCESSURL; ?></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_EXTRA_SUCCESSURL; ?></td>
+			</tr>
+		</table>
+		<br><h4><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_HEAD_LK; ?></h4>
+		<table style="text-align:left">
 		<tr>
-			<td colspan=2><h3><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_SETTINGS; ?></h3></td>
+			<td colspan=2></td>
 		</tr>
 		<tr>
 			<td><strong><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_SHOPID; ?>:</strong></td>
@@ -239,10 +302,37 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 			</td>
 			<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_SHOPPASSWORD_EXPLAIN; ?></td>
 		</tr>
+			<tr>
+				<td></td>
+				<td colspan="2">
+					<?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_EXTRA_SETTING; ?>
+				</td>
+			</tr>
+		</table>
 
-		<tr>
-			<td colspan=2><h3><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_PAYMENTTYPES; ?></h3></td>
-		</tr>
+		<br><h4>Настройка сценария оплаты</h4>
+		<table style="text-align:left">
+			<tr>
+				<td><strong>Сценарий оплаты</strong></td>
+				<td></td>
+				<td>
+					<input type="radio" name="YM_PAYMODE" class="radio" value="1" <?php if( intval(YM_PAYMODE) ) echo "checked=\"checked\" "; ?>/>
+					<?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_PAYMODE1; ?><br>
+					<input type="radio" name="YM_PAYMODE" class="radio" value="0" <?php if( !intval(YM_PAYMODE) ) echo "checked=\"checked\" "; ?>/>
+					<?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_PAYMODE0; ?>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td colspan="2">
+					<a target="_blank" href="https://tech.yandex.ru/money/doc/payment-solution/payment-form/payment-form-docpage/">
+						<?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_EXTRA_PAYMODE; ?></a>
+				</td>
+			</tr>
+
+		</table>
+
+		<table style="text-align:left" class="selectPayOpt">
 		<tr>
 			<td><strong><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_PC; ?>:</strong></td>
 			<td>
@@ -319,16 +409,6 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 				<input type="checkbox" name="YM_QP" class="checkbox" value="1" <?php if( intval(YM_QP) ) echo "checked=\"checked\" "; ?>/>
 			</td>
 			<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_QP_EXPLAIN; ?></td>
-		</tr>
-		<tr>
-			<td colspan=2><hr /></td>
-		</tr>
-		<tr>
-			<td><strong><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_DEBUG; ?>:</strong></td>
-			<td>
-				<input type="checkbox" name="YM_DEBUG" class="checkbox" value="1" <?php if( intval(YM_DEBUG) ) echo "checked=\"checked\" "; ?>/>
-			</td>
-			<td><?php echo $VM_LANG->PHPSHOP_ADMIN_CFG_YM_DEBUG_EXPLAIN; ?></td>
 		</tr>
 		<tr>
 			<td colspan=2><hr /></td>
@@ -430,10 +510,16 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 			{
 				$my_config_array['YM_DEBUG'] = '0';
 			} else {
-				$my_config_array['YM_DEBUG'] ='1';
+				$my_config_array['YM_DEBUG'] = '1';
+			}
+			if(!isset($d['YM_PAYMODE']))
+			{
+				$my_config_array['YM_PAYMODE'] = '1';
+			} else {
+				$my_config_array['YM_PAYMODE'] = $d['YM_PAYMODE'];
 			}
 
-			$list=array('PC','AC','GC','MC','WM','AB','SB','MA','PB','QW', 'QP');
+			$list=array('PC','AC','GP','MC','WM','AB','SB','MA','PB','QW', 'QP');
 			foreach ($list as $item) $my_config_array['YM_'.$item] =(isset($d['YM_'.$item]) && $d['YM_'.$item])?'1':'0';
 		}
 
@@ -463,7 +549,7 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 	
 	//Форма для оплаты заказа через систему Яндекс.Деньги
 	//Выводится после оформления заказа. Через payment_extrainfo
-	function get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, $hidden_param) 
+	function get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, $hidden_param)
 	{
 		global $db;
 		
@@ -474,7 +560,7 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 
 		$ym_shopID=YM_SHOPID; //Ваше "shopID" (идентификатор магазина) в системе Яндекс.Деньги
 		$ym_SCID=YM_SCID; //Ваш "SCID" (идентификатор витрины) в системе Яндекс.Деньги
-		$ym_shopPassword=YM_SHOPPASSWORD; //Ваш "shopPassword" (секретный пароль) в системе Яндекс.Деньги
+		$ym_mode=YM_PAYMODE; //
 
 		// HTML-страница с формой
 		$htmlBlock =<<<YMEOF
@@ -548,7 +634,7 @@ class yamoney_statistics {
 			'url' => JURI::base(),
 			'cms' => 'joomla',
 			'version' => JVERSION,
-			'ver_mod' => '1.2.2',
+			'ver_mod' => YM_VERSION,
 			'yacms' => false,
 			'email' => $user->email,
 			'shopid' => YM_SHOPID || 0,
@@ -556,11 +642,9 @@ class yamoney_statistics {
 				'kassa' => true
 			)
 		);
+		$array_crypt = base64_encode(serialize($array));
 
-		$key_crypt = gethostbyname($_SERVER['HTTP_HOST']);
-		$array_crypt = $this->crypt_encrypt($array, $key_crypt);
-
-		$url = 'https://statcms.yamoney.ru/';
+		$url = 'https://statcms.yamoney.ru/v2/';
 		$curlOpt = array(
 			CURLOPT_HEADER => false,
 			CURLOPT_RETURNTRANSFER => true,
@@ -571,7 +655,7 @@ class yamoney_statistics {
 		);
 
 		$curlOpt[CURLOPT_HTTPHEADER] = $headers;
-		$curlOpt[CURLOPT_POSTFIELDS] = http_build_query(array('data' => $array_crypt));
+		$curlOpt[CURLOPT_POSTFIELDS] = http_build_query(array('data' => $array_crypt, 'lbl' => 1));
 
 		$curl = curl_init($url);
 		curl_setopt_array($curl, $curlOpt);
@@ -580,26 +664,5 @@ class yamoney_statistics {
 		$error = curl_error($curl);
 		$rcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
-	}
-	
-	private function crypt_encrypt($data, $key)
-	{
-		$key = hash('sha256', $key, true);
-		$data = serialize($data);
-		$init_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
-		$init_vect = mcrypt_create_iv($init_size, MCRYPT_RAND);
-		$str = $this->randomString(strlen($key)).$init_vect.mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $data, MCRYPT_MODE_CBC, $init_vect);
-		return base64_encode($str);
-	}
-
-	private function randomString($len)
-	{
-		$str = '';
-		$pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$pool_len = strlen($pool);
-		for ($i = 0; $i < $len; $i++) {
-			$str .= substr($pool, mt_rand(0, $pool_len - 1), 1);
-		}
-		return $str;
 	}
 }
