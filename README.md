@@ -15,7 +15,7 @@
 * компонент VirtueMart версии 1.1.9
 
 ###Установка модуля
-Для установки данного модуля необходимо загрузить [архив](https://github.com/yandex-money/yandex-money-cms-joomla-mammuthus/archive/master.zip) и поместить папку `administrator` в корень вашего сайта. Следуйте указаниям в [инструкции](https://github.com/yandex-money/yandex-money-cms-joomla-mammuthus/raw/master/Joomla%20instruction.doc).
+Для установки данного модуля необходимо загрузить [архив](https://github.com/yandex-money/yandex-money-cms-joomla-mammuthus/archive/master.zip) и поместить папку `administrator` в корень вашего сайта. Следуйте указаниям в [инструкции](https://github.com/yandex-money/yandex-money-cms-joomla-mammuthus/blob/6da2d9293759eac24df5b8911319bf0b9cd5f63a/Joomla%20instruction.doc?raw=true).
 Пожалуйста, обязательно делайте бекапы!
 
 ###Лицензионный договор.
