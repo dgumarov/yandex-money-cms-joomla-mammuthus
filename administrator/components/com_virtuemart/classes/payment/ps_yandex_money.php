@@ -4,7 +4,7 @@
 // Компонент ps_yandex_money.php, реализующий настройку подключения по протоколу Яндекс.Деньги 3.0(ЕПР)
 // 
 if( !defined( '_VALID_MOS' ) && !defined( '_JEXEC' ) ) die( 'Direct Access to '.basename(__FILE__).' is not allowed.' );
-define ('YM_VERSION', '1.2.3');
+define ('YM_VERSION', '1.3.0');
 class yandex_money_language 
 {
 	var $PHPSHOP_ADMIN_CFG_YM_CURRENCY = "руб.";
@@ -413,9 +413,74 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 		<tr>
 			<td colspan=2><hr /></td>
 		</tr>
+        </table>
+        <table style="text-align:left">
+            <tr>
+                <td><strong>Отправлять в Яндекс.Кассу данные для чеков (54-ФЗ)</strong></td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="YM_SEND_CHECK" class="radio" value="1" <?php if(YM_SEND_CHECK) echo "checked=\"checked\" "; ?>/>
+                    Включить<br>
+                    <input type="radio" name="YM_SEND_CHECK" class="radio" value="0" <?php if(!YM_SEND_CHECK) echo "checked=\"checked\" "; ?>/>
+                    Выключить
+                </td>
+                <td>Отправлять в Яндекс.Кассу данные для чеков (54-ФЗ) НДС</td>
+            </tr>
+            <? if (YM_SEND_CHECK) { ?><?
+                $q = "SELECT `tax_rate_id`, `tax_rate`  FROM `#__{vm}_tax_rate` ORDER BY `tax_rate` DESC, `tax_rate_id` ASC" ;
+                $db->query( $q ) ;
+
+                $tax_rates = Array( ) ;
+                while( $db->next_record() ) {
+                    $tax_rates[$db->f( "tax_rate_id" )] = $db->f( "tax_rate" ) ;
+                }
+
+                ?>
+            <tr>
+                <td colspan="3">
+                    <table style="text-align:left">
+                        <tr>
+                            <td><strong>Ставка в вашем магазине.</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Слева — ставка НДС в вашем магазине, справа — в Яндекс.Кассе. Пожалуйста, сопоставьте их.</strong></td>
+                        </tr>
+                        <? foreach ($tax_rates as $id_tax =>  $tax) {?>
+                            <?
+                            $rate = false;
+                            if (defined('YM_TAXES_'.$id_tax)) {
+                                $rate = constant('YM_TAXES_'.$id_tax);
+                            } else {
+                                $rate = 1;
+                            }
+
+                            ?>
+                            <tr>
+                                <td></td>
+                                <td><strong><? echo ($tax*100); ?>% Передать в Яндекс.Кассу как</strong></td>
+                                <td></td>
+                                <td>
+                                    <select name="YM_TAXES_<? echo $id_tax; ?>">
+                                        <option <? if ($rate == 1) { ?> selected="selected" <? } ?> value="1">Без НДС</option>
+                                        <option <? if ($rate == 2) { ?> selected="selected" <? } ?> value="2">0%</option>
+                                        <option <? if ($rate == 3) { ?> selected="selected" <? } ?> value="3">10%</option>
+                                        <option <? if ($rate == 4) { ?> selected="selected" <? } ?> value="4">18%</option>
+                                        <option <? if ($rate == 5) { ?> selected="selected" <? } ?> value="5">Расчётная ставка 10/110</option>
+                                        <option <? if ($rate == 6) { ?> selected="selected" <? } ?> value="6">Расчётная ставка 18/118</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        <? } ?>
+                    </table>
+                </td>
+            </tr>
+            <? } ?>
+
+
 
 		<?php
-		$q = "SELECT order_status_name, order_status_code FROM #__{vm}_order_status ORDER BY list_order";
+        $q = "SELECT order_status_name, order_status_code FROM #__{vm}_order_status ORDER BY list_order";
 		$dbs = new ps_DB;
 		$dbs->query($q);
 		$order_status_code = Array();
@@ -485,6 +550,12 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 		/** Check for empty values **/
 		if (is_array($d)) 
 		{
+		    foreach ($d as $conf => $val) {
+                if (strpos($conf,'YM_TAXES_') === 0) {
+                    $my_config_array[$conf] = $val;
+                }
+            }
+
 			if(!isset($d['YM_SHOPID']))
 			{
 				$my_config_array['YM_SHOPID'] = '0';
@@ -504,6 +575,13 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 				$my_config_array['YM_SHOPPASSWORD'] = '';
 			} else {
 				$my_config_array['YM_SHOPPASSWORD'] = $d['YM_SHOPPASSWORD'];
+			}
+
+			if(!isset($d['YM_SEND_CHECK']))
+			{
+				$my_config_array['YM_SEND_CHECK'] = '';
+			} else {
+				$my_config_array['YM_SEND_CHECK'] = $d['YM_SEND_CHECK'];
 			}
 
 			if(!isset($d['YM_DEBUG']) || !$d['YM_DEBUG']) 
@@ -552,24 +630,99 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 	function get_ym_params_block($host, $out_sum, $customerNumber, $orderNumber, $hidden_param)
 	{
 		global $db;
-		
-		if(file_exists( CLASSPATH."payment/".$this->classname.".cfg.php" )) 
-		{
-			include_once( CLASSPATH."payment/".$this->classname.".cfg.php" );
-		}
+
+        if(file_exists( CLASSPATH."payment/".$this->classname.".cfg.php" ))
+        {
+            include_once( CLASSPATH."payment/".$this->classname.".cfg.php" );
+        }
+
+        if (YM_SEND_CHECK) {
+            $dbo = $db;
+            $receipt = array(
+                'customerContact' => '99',
+                'items' => array(),
+            );
+
+            if ($shipping = $dbo->f('ship_method_id')) {
+                $info = explode('|', $shipping);
+            }
+
+            $dbi = new ps_DB();
+            $dbi->query("SELECT oi.*, p.product_tax_id
+              FROM #__{vm}_order_item oi
+              LEFT JOIN #__{vm}_product p ON (p.product_id = oi.product_id)
+              WHERE
+                oi.order_id=".$db->getEscaped($orderNumber));
+
+            $osum = 0;
+            foreach ($dbi->record as $item) {
+                $osum += (float)$item->product_final_price * (float)$item->product_quantity;
+            }
+
+            if (isset($info) && isset($info[3])) {
+                $osum += (float)$info[3];
+            }
+
+            $disc = 0;
+            if ($db->f('coupon_discount')) {
+                $disc = (float)$db->f('coupon_discount')/$osum;
+            }
+
+            while ($dbi->next_record()) {
+                $tax_id = 1;
+                if ($product_tax_id = $dbi->f('product_tax_id')) {
+                    if ($product_tax_id) {
+                        if (defined('YM_TAXES_'.$product_tax_id)) {
+                            $tax_id = constant('YM_TAXES_'.$product_tax_id);
+                        }
+                    }
+                }
+
+                $receipt['items'][] = array(
+                    'quantity' => $dbi->f('product_quantity'),
+                    'text' => strip_tags(substr($dbi->f('order_item_name').' '.$dbi->f('product_attribute'), 0, 128)),
+                    'tax' => $tax_id,
+                    'price' => array(
+                        'amount' => number_format($dbi->f('product_final_price') * (1 - $disc), 2, '.', ''),
+                        'currency' => 'RUB'
+                    ),
+                );
+            }
+
+            if (isset($info) && isset($info[3])) {
+                if (isset($info[3]) && $info[3] > 0) {
+                    $tax_shipping = 1;
+                    if (defined(strtoupper($info[0]).'_TAX_CLASS')) {
+                        $tax_class = constant(strtoupper($info[0]).'_TAX_CLASS');
+                        if (defined('YM_TAXES_'.$tax_class)) {
+                            $tax_shipping = constant('YM_TAXES_'.$tax_class);
+                        }
+                    }
+
+                    $receipt['items'][] = array(
+                        'quantity' => 1,
+                        'text' => substr($info[2], 0, 128),
+                        'tax' => $tax_shipping,
+                        'price' => array(
+                            'amount' => number_format($info[3] * (1 - $disc), 2, '.', ''),
+                            'currency' => 'RUB'
+                        ),
+                    );
+                }
+            }
+        }
 
 		$ym_shopID=YM_SHOPID; //Ваше "shopID" (идентификатор магазина) в системе Яндекс.Деньги
 		$ym_SCID=YM_SCID; //Ваш "SCID" (идентификатор витрины) в системе Яндекс.Деньги
 		$ym_mode=YM_PAYMODE; //
 
 		// HTML-страница с формой
-		$htmlBlock =<<<YMEOF
-<input type="hidden"name="cms_name" value="joomla-virtuemart">
-<input type="hidden"name="scid" value="$ym_SCID">
-<input type="hidden" name="ShopID" value="$ym_shopID">
-<input type="hidden" name="Sum" value="$out_sum">
-<input type="hidden" name="CustomerNumber" value="$customerNumber">
-YMEOF;
+		$htmlBlock = '
+            <input type="hidden"name="cms_name" value="joomla-virtuemart">
+            <input type="hidden"name="scid" value="$ym_SCID">
+            <input type="hidden" name="ShopID" value="$ym_shopID">
+            <input type="hidden" name="Sum" value="$out_sum">
+            <input type="hidden" name="CustomerNumber" value="$customerNumber">';
 
 		if ( $orderNumber != "" )
 		{
@@ -577,6 +730,10 @@ YMEOF;
 			$htmlBlock .= '<input type="hidden" name="shopSuccessURL" value="http://'.$host.'/ru/cart?page=account.order_details&order_id='.$orderNumber.'">';
 			$htmlBlock .= '<input type="hidden" name="shopFailURL" value="http://'.$host.'/ru/cart?page=account.order_details&order_id='.$orderNumber.'">'."\n";
 		}
+
+        if (YM_SEND_CHECK) {
+            $htmlBlock .= '<input type="hidden" name="ym_merchant_receipt" value=\''.json_encode($receipt).'\'>'."\n";
+        }
 
 		if ( $hidden_param && is_array($hidden_param) )
 		{

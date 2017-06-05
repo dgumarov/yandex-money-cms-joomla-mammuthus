@@ -14,6 +14,10 @@
 * версия 1.5;
 * компонент VirtueMart версии 1.1.9
 
+###Поддержка передачи данных чека
+Если вы настраивали отправку чеков в налоговую через партнеров Яндекс.Кассы (по 54-ФЗ), в настройках модуля надо включить отправку данных для чека.
+[Помощь Кассы: отправка чеков по 54-ФЗ](https://yandex.ru/support/checkout/payments/tax-sync.html)
+
 ###Установка модуля
 Для установки данного модуля необходимо загрузить [архив](https://github.com/yandex-money/yandex-money-cms-joomla-mammuthus/archive/master.zip) и поместить папку `administrator` в корень вашего сайта. Следуйте указаниям в [инструкции](https://github.com/yandex-money/yandex-money-cms-joomla-mammuthus/blob/6da2d9293759eac24df5b8911319bf0b9cd5f63a/Joomla%20instruction.doc?raw=true).
 Пожалуйста, обязательно делайте бекапы!
