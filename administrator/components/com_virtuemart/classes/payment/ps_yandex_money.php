@@ -638,8 +638,9 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 
         if (YM_SEND_CHECK) {
             $dbo = $db;
+			$user = JFactory::getUser();
             $receipt = array(
-                'customerContact' => '99',
+                'customerContact' => $user->email,
                 'items' => array(),
             );
 
@@ -719,10 +720,10 @@ echo $ym->get_ym_params_block($host, number_format($out_sum, 2, ".", ""), $custo
 		// HTML-страница с формой
 		$htmlBlock = '
             <input type="hidden"name="cms_name" value="joomla-virtuemart">
-            <input type="hidden"name="scid" value="$ym_SCID">
-            <input type="hidden" name="ShopID" value="$ym_shopID">
-            <input type="hidden" name="Sum" value="$out_sum">
-            <input type="hidden" name="CustomerNumber" value="$customerNumber">';
+            <input type="hidden"name="scid" value="'.$ym_SCID.'">
+            <input type="hidden" name="ShopID" value="'.$ym_shopID.'">
+            <input type="hidden" name="Sum" value="'.$out_sum.'">
+            <input type="hidden" name="CustomerNumber" value="'.$customerNumber.'">';
 
 		if ( $orderNumber != "" )
 		{
